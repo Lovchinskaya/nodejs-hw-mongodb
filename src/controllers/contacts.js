@@ -7,8 +7,23 @@ import {
   updateContact,
 } from '../contacts/contacts.js';
 
+import { parsePaginationParems } from '../utils/parsePaginationParams.js';
+import { parseSortParams } from '../utils/parseSortParams.js';
+import { parseFilterParams } from '../utils/parseFilterParams.js';
+
 export const getAllContactsController = async (req, res, next) => {
-  const contacts = await getAllContacts();
+  const { page, perPage } = parsePaginationParems(req.query);
+  const { sortOrder, sortBy } = parseSortParams(req.query);
+  const filter = parseFilterParams(req.query);
+
+  const contacts = await getAllContacts({
+    page,
+    perPage,
+    sortOrder,
+    sortBy,
+    filter,
+  });
+
   res.status(200).json({
     status: 200,
     message: 'Successfully found contacts!',
@@ -30,8 +45,13 @@ export const getContactByIdController = async (req, res, next) => {
     data: contact,
   });
 };
+
 export const createContactController = async (req, res, next) => {
   const contact = await createContact(req.body);
+
+  if (!contact) {
+    throw createHttpError(400, 'перевірте запит');
+  }
 
   res.status(201).json({
     status: 201,
@@ -39,6 +59,7 @@ export const createContactController = async (req, res, next) => {
     data: contact,
   });
 };
+
 export const updateContactController = async (req, res, next) => {
   const { contactId } = req.params;
 
@@ -51,10 +72,10 @@ export const updateContactController = async (req, res, next) => {
   const status = result.isNew ? 201 : 200;
 
   res.status(status).json({
-      status,
-      message: 'Successfully patched a contact!',
-      data: result.contact,
-    });
+    status,
+    message: 'Successfully patched a contact!',
+    data: result.contact,
+  });
 };
 
 export const deleteContactController = async (req, res, next) => {
@@ -63,8 +84,7 @@ export const deleteContactController = async (req, res, next) => {
   const contact = await deleteContact(contactId);
 
   if (!contact) {
-    next(createHttpError(404, 'Contact not found'));
-    return;
+    throw createHttpError(404, 'Contact not found');
   }
-  res.status(204).send();
+  res.status(200).send();
 };
