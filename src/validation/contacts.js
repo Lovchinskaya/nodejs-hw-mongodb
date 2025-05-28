@@ -8,7 +8,7 @@ export const createContactSchema = Joi.object({
     'any.required': 'Поле name є обовʼязковим полем',
   }),
   phoneNumber: Joi.string()
-    .pattern(/^[\d\-\s]+$/)
+    .pattern(/^[\d\+\-\(\)\s]+$/)
     .min(3)
     .max(16)
     .required()
