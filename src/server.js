@@ -2,20 +2,22 @@ import dotenv from "dotenv";
 import express from 'express';
 import pino from 'pino-http';
 import cors from 'cors';
-// import { getEnvVar } from './utils/getEnvVar.js';
-import contactsRouter from './routers/contacts.js';
+import { getEnvVar } from './utils/getEnvVar.js';
+import router from './routers/index.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 // import { getAllContacts, getContactById } from './contacts/contacts.js';
+import cookieParser from 'cookie-parser';
 
 dotenv.config();
 
-const PORT = Number(process.env.PORT);
+const PORT = Number(getEnvVar('PORT', '3000'));
 
 export const setupServer = async () => {
  const app = express();
 
   app.use(express.json());
   app.use(cors());
+  app.use(cookieParser());
 
   app.use(
     pino({
@@ -29,7 +31,7 @@ export const setupServer = async () => {
     res.send('Server is work');
   });
 
-  app.use(contactsRouter);
+  app.use(router);
 
   app.use(notFoundHandler);
 

@@ -4,7 +4,7 @@ import {
   logoutUser,
   refreshUsersSession,
   registerUser,
-} from '../servis/auth.js';
+} from '../contacts/auth.js';
 
 export const registerUserController = async (req, res) => {
   const user = await registerUser(req.body);
