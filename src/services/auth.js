@@ -4,6 +4,8 @@ import bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { SessionCollection } from '../models/session.js';
 import { FIFTEEN_MINUTES, ONE_DAY } from '../constants/index.js';
+import {sendMail} from "../utils/sendMail.js";
+
 
 export const registerUser = async (payload) => {
   console.log('Payload in registerUser:', payload);
@@ -87,3 +89,17 @@ export const refreshUsersSession = async (sessionId, refreshToken) => {
     ...newSession,
   });
 };
+
+export async function requestResetPassword (email){
+  const user = await UserCollection.findOne ({email});
+
+  if (user === null){
+    throw  new createHttpError.NotFound ('User not found');
+  }
+
+  await sendMail(
+    user.email,
+    'Reset password',
+    `<p>Please click <a href="">here</a> to reset password </p>`,
+  );
+}
