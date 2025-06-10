@@ -1,3 +1,6 @@
+import * as fs from "node:fs";
+import path from "node:path";
+import Handlebars from "handlebars";
 import createHttpError from 'http-errors';
 import { UserCollection } from '../models/user.js';
 import bcrypt from 'bcrypt';
@@ -5,10 +8,17 @@ import { randomBytes } from 'crypto';
 import { SessionCollection } from '../models/session.js';
 import { FIFTEEN_MINUTES, ONE_DAY } from '../constants/index.js';
 import {sendMail} from "../utils/sendMail.js";
+import jwt from "jsonwebtoken";
+import { getEnvVar } from "../utils/getEnvVar.js";
 
+
+const RESET_PASSWORD_TEMPLATE = fs.readFileSync(
+  path.resolve('src', 'templates', 'reset-password.hbs'),
+  'UTF-8',
+);
 
 export const registerUser = async (payload) => {
-  console.log('Payload in registerUser:', payload);
+  // console.log('Payload in registerUser:', payload);
 
   const user = await UserCollection.findOne({ email: payload.email });
 
@@ -96,10 +106,48 @@ export async function requestResetPassword (email){
   if (user === null){
     throw  new createHttpError.NotFound ('User not found');
   }
+  
+  const token = jwt.sign({
+    // email: user.email,
+     sub: user._id,
+      name: user.name,
+  }, getEnvVar("JWT_SECRET"), {
+    expiresIn: "25m",
+  });
 
-  await sendMail(
+ const template = Handlebars.compile(RESET_PASSWORD_TEMPLATE);
+  
+ await sendMail(
     user.email,
     'Reset password',
-    `<p>Please click <a href="">here</a> to reset password </p>`,
+
+    template({
+      link: ` ${getEnvVar('APP_DOMAIN')}/?token=${token}`,
+    }),
   );
+}
+
+export async function resetPassword (password, token){
+  try{
+const decoded = jwt.verify(token, getEnvVar('JWT_SECRET'));
+
+const user = await UserCollection.findById(decoded.sub);
+
+if ( user === null){
+  throw new createHttpError.NotFound("User not found!");
+}
+const updatePassword = await bcrypt.hash(password, 10);
+await UserCollection.findByIdAndUpdate(user._id, {password: updatePassword});
+
+  } catch(error){
+if (error.name === 'JsonWebTokenError') {
+      throw new createHttpError.Unauthorized('Token is unauthorized');
+    }
+
+    if (error.name === 'TokenExpiredError') {
+      throw new createHttpError.Unauthorized('Token is expired or invalid.');
+    }
+
+    throw error;
+  }
 }

@@ -14,9 +14,9 @@ host: getEnvVar(SMTP.SMTP_HOST),
 
 export function sendMail(to, subject, html){
     return transport.sendMail({
-        from: getEnvVar("EMAIL_FROM"),
+        from: getEnvVar("SMTP_FROM"),
         to,
         subject,
-        html
+        html,
     });
 }

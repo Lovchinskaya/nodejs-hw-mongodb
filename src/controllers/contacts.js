@@ -22,7 +22,7 @@ export const getAllContactsController = async (req, res, next) => {
     sortOrder,
     sortBy,
     filter,
-    useId: req.user.id,
+    userId: req.user.id,
   });
 
   res.status(200).json({
