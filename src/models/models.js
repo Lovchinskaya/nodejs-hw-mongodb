@@ -28,7 +28,12 @@ const contactsShema = new Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-    }
+    },
+    photo: {
+      type: String,
+      default: null,
+      required: false,
+    },
   },
   {
     timestamps: true,

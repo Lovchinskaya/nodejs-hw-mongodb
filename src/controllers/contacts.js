@@ -6,7 +6,8 @@ import {
   getContactById,
   updateContact,
 } from '../services/contacts.js';
-import {uploadToCloudinary} from "../utils/uploadToCloud.js"
+import {uploadToCloudinary} from "../utils/uploadToCloud.js";
+// import { getEnvVar } from '../utils/getEnvVar.js';
 
 import { parsePaginationParems } from '../utils/parsePaginationParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
@@ -54,11 +55,17 @@ export const getContactByIdController = async (req, res, next) => {
 };
 
 export const createContactController = async (req, res, next) => {
+const photo = await uploadToCloudinary(req.file);
 
-  const result = await uploadToCloudinary(req.file.path);
+//   let photo = null;
 
-  console.log(result);
-  const contact = await createContact({...req.body, userId: req.user.id});
+//   if (getEnvVar("UPLOAD-CLOUDINARY" === "true")){
+//  const result = await uploadToCloudinary(req.file.path);
+//   };
+ 
+  const contact = await createContact({...req.body, 
+    userId: req.user.id, 
+    ...(photo && { photoUrl: photo })});
 
   if (!contact) {
     throw createHttpError(400, 'перевірте запит');
@@ -75,7 +82,13 @@ export const updateContactController = async (req, res, next) => {
   const { contactId } = req.params;
   const { id: userId } = req.user;
 
-  const result = await updateContact(contactId, userId, req.body);
+  const photo = await uploadToCloudinary(req.file);
+   const updatedData = {
+    ...req.body,
+    ...(photo && { photo: photo }),
+  };
+
+  const result = await updateContact(contactId, userId, updatedData);
 
   if (!result) {
     throw createHttpError(404, 'Contact not found');
