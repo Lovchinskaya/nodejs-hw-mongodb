@@ -108,7 +108,7 @@ export async function requestResetPassword (email){
   }
   
   const token = jwt.sign({
-    // email: user.email,
+    email: user.email,
      sub: user._id,
       name: user.name,
   }, getEnvVar("JWT_SECRET"), {

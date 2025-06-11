@@ -6,6 +6,7 @@ import {
   getContactById,
   updateContact,
 } from '../services/contacts.js';
+import {uploadToCloudinary} from "../utils/uploadToCloud.js"
 
 import { parsePaginationParems } from '../utils/parsePaginationParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
@@ -53,6 +54,10 @@ export const getContactByIdController = async (req, res, next) => {
 };
 
 export const createContactController = async (req, res, next) => {
+
+  const result = await uploadToCloudinary(req.file.path);
+
+  console.log(result);
   const contact = await createContact({...req.body, userId: req.user.id});
 
   if (!contact) {

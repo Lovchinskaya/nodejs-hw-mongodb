@@ -40,10 +40,10 @@ router.post('/logout',
 router.post('/refresh', 
   ctrlWrapper(refreshSessionuserController));
 
-router.post("/request-reset-password", 
+router.post("/send-reset-email", 
   jsonParser, validateBody(requestResetPasswordSchema), 
   ctrlWrapper(requestResetPasswordController));
 
-router.post("/reset-password", jsonParser, validateBody(resetPasswordSchema), ctrlWrapper(resetPasswordController));
+router.post("/reset-pwd", jsonParser, validateBody(resetPasswordSchema), ctrlWrapper(resetPasswordController));
 
 export default router;
