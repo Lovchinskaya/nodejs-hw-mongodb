@@ -1,3 +1,5 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import createHttpError from 'http-errors';
 import {
   createContact,
@@ -7,7 +9,7 @@ import {
   updateContact,
 } from '../services/contacts.js';
 import {uploadToCloudinary} from "../utils/uploadToCloud.js";
-// import { getEnvVar } from '../utils/getEnvVar.js';
+import { getEnvVar } from '../utils/getEnvVar.js';
 
 import { parsePaginationParems } from '../utils/parsePaginationParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
@@ -54,8 +56,29 @@ export const getContactByIdController = async (req, res, next) => {
   });
 };
 
+const handleUploadImage = async (file) => {
+  if (!file) return null;
+
+  let photo = null;
+
+  if (getEnvVar('UPLOAD-CLOUDINARY') === 'true') {
+    const result = await uploadToCloudinary(file.path);
+
+    await fs.unlink(file.path);
+
+    photo = result.secure_url;
+  } else {
+    await fs.rename(
+      file.path,
+      path.resolve('src', 'uploads', 'photo', file.filename),
+    );
+    photo = `http://localhost:3000/photo/${file.filename}`;
+  }
+  return photo;
+};
+
 export const createContactController = async (req, res, next) => {
-const photo = await uploadToCloudinary(req.file);
+const photo = await handleUploadImage(req.file);
 
 //   let photo = null;
 
@@ -63,12 +86,13 @@ const photo = await uploadToCloudinary(req.file);
 //  const result = await uploadToCloudinary(req.file.path);
 //   };
  
-  const contact = await createContact({...req.body, 
+  const contact = await createContact({
+    ...req.body, 
     userId: req.user.id, 
     ...(photo && { photoUrl: photo })});
 
   if (!contact) {
-    throw createHttpError(400, 'перевірте запит');
+    throw createHttpError(400, 'please check request');
   }
 
   res.status(201).json({
@@ -82,7 +106,7 @@ export const updateContactController = async (req, res, next) => {
   const { contactId } = req.params;
   const { id: userId } = req.user;
 
-  const photo = await uploadToCloudinary(req.file);
+  const photo = await handleUploadImage(req.file);
    const updatedData = {
     ...req.body,
     ...(photo && { photo: photo }),
@@ -112,5 +136,5 @@ export const deleteContactController = async (req, res, next) => {
   if (!contact) {
     throw createHttpError(404, 'Contact not found');
   }
-  res.status(200).send();
+  res.status(204).send();
 };
